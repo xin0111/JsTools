@@ -61,7 +61,7 @@ function getVideoUrl(base,count) {
 			downloadVideo(data['url_info'][0]['url'],data['title']+".mp4");				
 			if(count == index)
 			{
-				//开始下载
+				//开始执行task
 				async.waterfall(tasks);
 			}
 			index ++;
@@ -98,7 +98,7 @@ function getUrl(x) {
 	});
 }
 
-//getUrl("https://mp.weixin.qq.com/s/wGu-CCcYePwd23cLZi-4fg");
+//  getUrl("https://mp.weixin.qq.com/s/wGu-CCcYePwd23cLZi-4fg");
 
 // 控制台输入
 process.on('exit', function(code) { console.log(code) });
@@ -107,6 +107,13 @@ process.stdin.setEncoding('utf8');
 process.stdout.write("输入视频网址:\n");
 process.stdin.on('data',(input)=>{
   input = input.toString().trim();
-  getUrl(input);
+  if (input.indexOf("http://mp.weixin.qq.com/") > -1 || input.indexOf("https://mp.weixin.qq.com/") > -1) 
+  {
+	getUrl(input);
+  }
+  else
+  {
+	console.log('请填写 “ http://mp.weixin.qq.com/ ” 开头的网址');
+  }
 })
 
