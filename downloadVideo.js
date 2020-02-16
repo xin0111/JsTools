@@ -4,6 +4,9 @@ let http = require("http");
 let https = require("https");
 var querystring=require("querystring");
 var ProgressBar = require('progress');
+var async = require('async'); 
+
+var tasks = [];
 
 function downloadVideo(url,filepath) {
 
@@ -42,19 +45,26 @@ function getVideoUrl(base) {
 	//mid 图文ID
 	var video = "https://mp.weixin.qq.com/mp/videoplayer?action=get_mp_video_play_url&preview=0&__biz=MzIzMzE5ODI3MA==&mid=&idx=4&vid="+ res['vid']+ "&uin=&key=&pass_ticket=&wxtoken=777&appmsg_token=&x5=0&f=json";
 	
-	https.get(video, function (res) {
-		var html = '';		
-		res.on('data', function (chunk) {
-			html += chunk;
+	tasks.push (function(callback){
+
+		https.get(video, function (res) {
+			var html = '';	
+			// 必须要写,否则无法执行下一个task
+			callback(null);	
+			res.on('data', function (chunk) {
+				html += chunk;
+			});
+			res.on('end', function () {
+				let data = JSON.parse(html);				 
+				downloadVideo(data['url_info'][0]['url'],data['title']+".mp4");	
+			});
+			
 		});
-		res.on('end', function () {
-			let data = JSON.parse(html);
-			downloadVideo(data['url_info'][0]['url'],data['title']+".mp4");			
-		});
-	});
+
+	}) ;
 }
 
-function getUrl(x) {
+async   function getUrl(x) {
 	https.get(x, function (res) {
 		var html = '';
 		res.setEncoding('binary');
@@ -70,18 +80,19 @@ function getUrl(x) {
 			videos = videos.toArray();
 		
 			videos.forEach((video) => {
-				let video_src = video.attribs["data-src"];				
-				//延时
-				setTimeout(function(){getVideoUrl(video_src)},2000);	
+				let video_src = video.attribs["data-src"];		
+				getVideoUrl(video_src);
 			});
+
+			
+			 async.waterfall(tasks, function(err,a,b){ 
+			}) ;
 		})
 
 	}).on('error', function (err) {
 		console.log(err);
 	});
-
 }
-
 
 //getUrl("https://mp.weixin.qq.com/s/wGu-CCcYePwd23cLZi-4fg");
 
@@ -94,3 +105,4 @@ process.stdin.on('data',(input)=>{
   input = input.toString().trim();
   getUrl(input);
 })
+
