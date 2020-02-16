@@ -61,6 +61,7 @@ function getVideoUrl(base,count) {
 			downloadVideo(data['url_info'][0]['url'],data['title']+".mp4");				
 			if(count == index)
 			{
+				//开始下载
 				async.waterfall(tasks);
 			}
 			index ++;
@@ -97,15 +98,15 @@ function getUrl(x) {
 	});
 }
 
- getUrl("https://mp.weixin.qq.com/s/wGu-CCcYePwd23cLZi-4fg");
+//getUrl("https://mp.weixin.qq.com/s/wGu-CCcYePwd23cLZi-4fg");
 
 // 控制台输入
-// process.on('exit', function(code) { console.log(code) });
-// process.stdin.setEncoding('utf8');
+process.on('exit', function(code) { console.log(code) });
+process.stdin.setEncoding('utf8');
  
-// process.stdout.write("输入视频网址:\n");
-// process.stdin.on('data',(input)=>{
-//   input = input.toString().trim();
-//   getUrl(input);
-// })
+process.stdout.write("输入视频网址:\n");
+process.stdin.on('data',(input)=>{
+  input = input.toString().trim();
+  getUrl(input);
+})
 
