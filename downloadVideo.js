@@ -62,7 +62,9 @@ function getVideoUrl(base,count) {
 			if(count == index)
 			{
 				//开始执行task
-				async.waterfall(tasks);
+				async.waterfall(tasks,function(){
+					console.log("下载完成!");
+				});
 			}
 			index ++;
 		});
