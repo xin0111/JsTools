@@ -6,8 +6,6 @@ var querystring=require("querystring");
 var ProgressBar = require('progress');
 var async = require('async'); 
 
-var tasks = [];
-
 function downloadVideo(url,filepath) {
 
 	http.get(url, function (res) {
@@ -45,26 +43,19 @@ function getVideoUrl(base) {
 	//mid 图文ID
 	var video = "https://mp.weixin.qq.com/mp/videoplayer?action=get_mp_video_play_url&preview=0&__biz=MzIzMzE5ODI3MA==&mid=&idx=4&vid="+ res['vid']+ "&uin=&key=&pass_ticket=&wxtoken=777&appmsg_token=&x5=0&f=json";
 	
-	tasks.push (function(callback){
-
-		https.get(video, function (res) {
-			var html = '';	
-			// 必须要写,否则无法执行下一个task
-			callback(null);	
-			res.on('data', function (chunk) {
-				html += chunk;
-			});
-			res.on('end', function () {
-				let data = JSON.parse(html);				 
-				downloadVideo(data['url_info'][0]['url'],data['title']+".mp4");	
-			});
-			
+	https.get(video, function (res) {
+		var html = '';		
+		res.on('data', function (chunk) {
+			html += chunk;
 		});
-
-	}) ;
+		res.on('end', function () {
+			let data = JSON.parse(html);				 
+			downloadVideo(data['url_info'][0]['url'],data['title']+".mp4");
+		});
+	});
 }
 
-async   function getUrl(x) {
+function getUrl(x) {
 	https.get(x, function (res) {
 		var html = '';
 		res.setEncoding('binary');
@@ -81,12 +72,9 @@ async   function getUrl(x) {
 		
 			videos.forEach((video) => {
 				let video_src = video.attribs["data-src"];		
-				getVideoUrl(video_src);
+				//延时	
+				setTimeout(function(){getVideoUrl(video_src)},2000);	
 			});
-
-			
-			 async.waterfall(tasks, function(err,a,b){ 
-			}) ;
 		})
 
 	}).on('error', function (err) {
