@@ -44,21 +44,20 @@ function downloadVideo(url, filepath) {
 	});
 }
 
-function getVideoUrl(base,count) {
+function getVideoUrl(video_url,count) {
 
-	var res=querystring.parse(base);
-	//__biz可以认为是微信公众平台对外公布的公众帐号的唯一id	
-	//mid 图文ID
-	var video = "https://mp.weixin.qq.com/mp/videoplayer?action=get_mp_video_play_url&preview=0&__biz=MzIzMzE5ODI3MA==&mid=&idx=4&vid="+ res['vid']+ "&uin=&key=&pass_ticket=&wxtoken=777&appmsg_token=&x5=0&f=json";
-	
-	https.get(video, function (res) {
+	https.get(video_url, function (res) {
 		var html = '';	
 		res.on('data', function (chunk) {
 			html += chunk;
 		});
 		res.on('end', function () {
-			let data = JSON.parse(html);				 
-			downloadVideo(data['url_info'][0]['url'],data['title']+".mp4");				
+			let data = JSON.parse(html);		
+			let urlInfos = data['url_info'];
+			if(urlInfos.length>0)		 
+			{
+				downloadVideo(data['url_info'][0]['url'],data['title']+".mp4");		
+			}		
 			if(count == index)
 			{
 				//开始执行task
@@ -84,15 +83,31 @@ function getUrl(x) {
 			const cheerio = require('cheerio');
 			const $ = cheerio.load(html);
 			
+			//获取biz
+			let ogurl = $('meta').filter(
+				function( index ) {
+					return $('meta')[index].attribs['property'] == 'og:url';
+				  }
+			)[0].attribs['content'];
+			var biz=querystring.parse(ogurl)['http://mp.weixin.qq.com/s?__biz'];
+
 			let videos = $("iframe.video_iframe");
 			videos = videos.toArray();
-		
+			if(videos.length == 0)
+			{
+				console.log("未找到视频资源!");
+			}
 			index = 1;
 			videos.forEach((video) => {
 				let video_src = video.attribs["data-src"];		
-				getVideoUrl(video_src,videos.length);
-			});
 
+				var res = querystring.parse(video_src);
+				//__biz可以认为是微信公众平台对外公布的公众帐号的唯一id	
+				//mid 图文ID
+				var video_url = "https://mp.weixin.qq.com/mp/videoplayer?action=get_mp_video_play_url&preview=0&__biz="+biz+"&mid=&idx=4&vid="+ res['vid']+ "&uin=&key=&pass_ticket=&wxtoken=777&appmsg_token=&x5=0&f=json";
+
+				getVideoUrl(video_url,videos.length);
+			});
 		})
 
 	}).on('error', function (err) {
@@ -100,8 +115,7 @@ function getUrl(x) {
 	});
 }
 
-//  getUrl("https://mp.weixin.qq.com/s/wGu-CCcYePwd23cLZi-4fg");
-
+//getUrl("https://mp.weixin.qq.com/s/wGu-CCcYePwd23cLZi-4fg");
 // 控制台输入
 process.on('exit', function(code) { console.log(code) });
 process.stdin.setEncoding('utf8');
@@ -115,7 +129,7 @@ process.stdin.on('data',(input)=>{
   }
   else
   {
-	console.log('请填写 “ http://mp.weixin.qq.com/ ” 开头的网址');
+	console.log('请填写 “ http://mp.weixin.qq.com/ ” 开头的网址\n输入视频网址:');
   }
 })
 
