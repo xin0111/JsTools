@@ -125,7 +125,6 @@ process.stdin.on('data',(input)=>{
   input = input.toString().trim();
   if (input.indexOf("http://mp.weixin.qq.com/") > -1 || input.indexOf("https://mp.weixin.qq.com/") > -1) 
   {
-	  console.log("下载:"+input);
 	getUrl(input);
   }
   else
