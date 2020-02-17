@@ -7,7 +7,7 @@ var ProgressBar = require('progress');
 var async = require('async'); 
 
 var tasks = [];
-var index = 1;
+var count = 1;
 
 function downloadVideo(url, filepath) {
 
@@ -44,7 +44,7 @@ function downloadVideo(url, filepath) {
 	});
 }
 
-function getVideoUrl(video_url,count) {
+function getVideoUrl(video_url,video_num) {
 
 	https.get(video_url, function (res) {
 		var html = '';	
@@ -58,14 +58,14 @@ function getVideoUrl(video_url,count) {
 			{
 				downloadVideo(data['url_info'][0]['url'],data['title']+".mp4");		
 			}		
-			if(count == index)
+			if(video_num == count)
 			{
 				//开始执行task
 				async.waterfall(tasks,function(){
 					console.log("下载完成!");
 				});
 			}
-			index ++;
+			count ++;
 		});
 		
 	});
@@ -74,11 +74,13 @@ function getVideoUrl(video_url,count) {
 function getUrl(x) {
 	https.get(x, function (res) {
 		var html = '';
-		res.setEncoding('binary');
+		//res.setEncoding('binary');
 		res.on('data', function (chunk) {
 			html += chunk;
 		});
 		res.on('end', function () {
+			//计数
+			count = 1;
 
 			const cheerio = require('cheerio');
 			const $ = cheerio.load(html);
@@ -90,23 +92,20 @@ function getUrl(x) {
 				  }
 			)[0].attribs['content'];
 			var biz=querystring.parse(ogurl)['http://mp.weixin.qq.com/s?__biz'];
-
-			let videos = $("iframe.video_iframe");
-			videos = videos.toArray();
-			if(videos.length == 0)
-			{
-				console.log("未找到视频资源!");
-			}
-			index = 1;
-			videos.forEach((video) => {
-				let video_src = video.attribs["data-src"];		
-
-				var res = querystring.parse(video_src);
-				//__biz可以认为是微信公众平台对外公布的公众帐号的唯一id	
+			//__biz可以认为是微信公众平台对外公布的公众帐号的唯一id	
 				//mid 图文ID
-				var video_url = "https://mp.weixin.qq.com/mp/videoplayer?action=get_mp_video_play_url&preview=0&__biz="+biz+"&mid=&idx=4&vid="+ res['vid']+ "&uin=&key=&pass_ticket=&wxtoken=777&appmsg_token=&x5=0&f=json";
+			var video_url = "https://mp.weixin.qq.com/mp/videoplayer?action=get_mp_video_play_url&preview=0&__biz="+biz+"&mid=&idx=4&vid="+ '{vid}' + "&uin=&key=&pass_ticket=&wxtoken=777&appmsg_token=&x5=0&f=json";
+			//查找视频
+			var reg = /wxv_\d+/g;//g:匹配所有满足项
+			var vid_array = [...new Set(html.match(reg))];
+	
+			if(vid_array.length == 0)
+			{
+				console.log("未找到视频资源!");	
+			}			
+			vid_array.forEach((vid) => {
 
-				getVideoUrl(video_url,videos.length);
+				getVideoUrl(video_url.replace('{vid}',vid),vid_array.length);
 			});
 		})
 
